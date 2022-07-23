@@ -9,7 +9,7 @@ docker build -t backend .
 
 - To test is locally :
 ```
-docker run -v $PWD/app:/backend/app -v $PWD/tests:/backend/tests -v $PWD/data:/data backend sh -c "pytest tests -s"
+docker run -v $PWD/app:/backend/app -v $PWD/tests:/backend/tests -v $PWD/data:/data --env-file=.env  backend sh -c "pytest tests -s"
 ```
 
 # backend
@@ -18,7 +18,7 @@ The package *backend* is served with fastapi, available in the docker image.
 
 - To launch locally :
 ```
-docker run --rm -p 8080:80 -v $PWD/app:/backend/app -v $PWD/data:/data --name backend-fastapi backend
+docker run --rm -p 8080:80 -v $PWD/app:/backend/app -v $PWD/data:/data  --env-file=.env DATA_PATH=/data  --name backend-fastapi backend
 ```
 - To test locally:
 ```
