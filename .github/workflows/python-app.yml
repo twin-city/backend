@@ -45,9 +45,9 @@ jobs:
         # Add the module directly in the python path ...
         export PYTHONPATH=$PYTHONPATH:$PWD/app
         mv .env.sample .env
-        # Export all variables : 
-        source tmp.txt
-        export $(cut -d= -f1 tmp.txt)
+        # Export all variables :
+        source .env
+        export $(cut -d= -f1 .env)
         pytest tests
 
   deploy:
