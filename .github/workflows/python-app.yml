@@ -40,10 +40,10 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        # prepare_data module seems not to be used, whereas it is defined
+        # app module seems not to be used, whereas it is defined
         # in pyproject.toml, works  locally but not in githubaction.
         # Add the module directly in the python path ...
-        export PYTHONPATH=$PYTHONPATH:$PWD/prepare_data
+        export PYTHONPATH=$PYTHONPATH:$PWD/app
         mv .env.sample .env
         pytest tests
 

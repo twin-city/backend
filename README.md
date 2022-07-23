@@ -1,6 +1,6 @@
 # Docker Version
 
-The docker image of this package is built with github action and stored [here](https://github.com/orgs/twin-city/packages/container/package/prepare-data).
+Backend to serve [prepare_data](https://github.com/twin-city/prepare-data) package and launch kubernetes job.
 
 - To build it locally :
 ```
@@ -9,7 +9,7 @@ docker build -t backend .
 
 - To test is locally :
 ```
-docker run -v $PWD/backend:/backend -v $PWD/tests:/tests -v $PWD/data:/data backend sh -c "pytest tests"
+docker run -v $PWD/app:/backend/app -v $PWD/tests:/backend/tests -v $PWD/data:/data backend sh -c "pytest tests -s"
 ```
 
 # backend

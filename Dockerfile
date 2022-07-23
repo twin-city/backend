@@ -19,6 +19,8 @@ VOLUME /data
 # Install backend
 WORKDIR /backend
 COPY ./requirements.txt /backend/requirements.txt
+COPY ./pyproject.toml /backend/pyproject.toml
+
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 COPY ./app /backend/app
 
