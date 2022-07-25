@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from prepare_data.main import main
 from prepare_data import utils
 from pyproj import Proj, transform
+from k8s_job import start_process
+
 
 app = FastAPI()
 
@@ -26,4 +28,11 @@ async def generate(x1: float, y1: float, x2: float, y2: float,
     # Convert to shapely polygon
     polygon = utils.convert2poly(x1, y1, x2, y2)
     main(polygon)
+
+    # Creates the k8s job
+    cmd = 'python'
+    args = '--version'
+    job_name = 'pi'
+    start_process(job_name, cmd, args)
+
     return {"link": "https://.."}

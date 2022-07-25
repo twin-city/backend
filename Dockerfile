@@ -22,6 +22,11 @@ COPY ./requirements.txt /backend/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 COPY ./app /backend/app
 
+# Set environment var
+ENV IMAGE=python3.10
+ENV KUBECONFIG=os.environ['KUBECONFIG']
+ENV JOB_NS=twincity
+
 EXPOSE 80
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
