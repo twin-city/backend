@@ -7,16 +7,10 @@ spec:
     - name: exec-k8s-job
       image: djadeau/exec_k8s_job:latest
       env:
-      - name: JOB_NAME
-        value: "pi"
       - name: JOB_NS
         value: "twincity"
       - name: IMAGE
         value: "python:3.10"
-      - name: COMMAND
-        value: "python"
-      - name: ARGS
-        value: "--version"
       - name: KUBECONFIG
         valueFrom: 
           secretKeyRef:
