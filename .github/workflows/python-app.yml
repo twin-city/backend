@@ -40,11 +40,14 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        # prepare_data module seems not to be used, whereas it is defined
+        # app module seems not to be used, whereas it is defined
         # in pyproject.toml, works  locally but not in githubaction.
         # Add the module directly in the python path ...
-        export PYTHONPATH=$PYTHONPATH:$PWD/prepare_data
+        export PYTHONPATH=$PYTHONPATH:$PWD/app
         mv .env.sample .env
+        # Export all variables
+        source .env
+        export $(cut -d= -f1 .env)
         pytest tests
 
   deploy:
@@ -78,7 +81,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       -
         name: Build and Push (latest)
-        if: github.event_name == 'push'
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v3
         with:
           context: .
