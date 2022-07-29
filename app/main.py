@@ -1,3 +1,4 @@
+import sys
 from typing import Optional
 
 from fastapi import FastAPI
@@ -5,6 +6,8 @@ from fastapi import FastAPI
 from prepare_data.main import main
 from prepare_data import utils
 from pyproj import Proj, transform
+
+sys.path.insert(0, "/backend/app")
 from k8s_job import start_process
 
 

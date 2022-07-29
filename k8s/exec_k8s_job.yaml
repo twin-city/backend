@@ -5,7 +5,9 @@ metadata:
 spec:
   containers:
     - name: exec-k8s-job
-      image: djadeau/exec_k8s_job:latest
+      image: djadeau/tc-api:latest
+      ports:
+      - containerPort: 80
       env:
       - name: JOB_NS
         value: "twincity"
