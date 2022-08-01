@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 kubernetes
+requests
+git+https://github.com/twin-city/prepare-data.git@v1.4
