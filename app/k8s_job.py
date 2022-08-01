@@ -3,9 +3,9 @@ from kubernetes import client, config
 from time import sleep
 import os
 
-JOB_NS=os.environ['JOB_NS']
-IMAGE=os.environ['IMAGE']
-KUBECONFIG=os.environ['KUBECONFIG']
+JOB_NS=os.environ.get('JOB_NS', '')
+IMAGE=os.environ.get('IMAGE', '')
+KUBECONFIG=os.environ.get('KUBECONFIG', '')
 KUBECONFIG_FILE="/tmp/kubeconfig.yaml"
 
 def create_job_object(job_name, cmd, args):
