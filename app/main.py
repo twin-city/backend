@@ -1,6 +1,7 @@
 import sys
+import os
 from typing import Optional
-
+from kubernetes import config
 from fastapi import FastAPI
 
 from prepare_data.main import main
@@ -8,8 +9,7 @@ from prepare_data import utils
 from pyproj import Proj, transform
 
 sys.path.insert(0, "/backend/app")
-from k8s_job import start_process
-
+from k8s_job import Job
 
 app = FastAPI()
 
@@ -20,7 +20,7 @@ def read_root():
 
 
 @app.get("/generate/")
-async def generate(x1: float, y1: float, x2: float, y2: float,
+async def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
                 crs: Optional[str] = None):
     # Convert to LAMBERT if needed
     if crs :
@@ -32,10 +32,18 @@ async def generate(x1: float, y1: float, x2: float, y2: float,
     polygon = utils.convert2poly(x1, y1, x2, y2)
     main(polygon)
 
-    # Creates the k8s job
-    cmd = 'python'
-    args = '--version'
-    job_name = 'pi'
-    start_process(job_name, cmd, args)
-
-    return {"link": "https://.."}
+    # start job
+    if job:
+        config.load_kube_config()
+        # Creates the k8s job
+        name = f'test-{y1}-{x1}-{y2}-{x2}'
+        job_instance = Job(image="debian", namespace="twincity")
+        template = job_instance.create_job_object(name)
+        try:
+            job_instance.start_job(template)
+            info = job_instance.get_job_status(name, follow=False)
+        except Exception as e:
+            return {'Job failed': e}
+        return info
+    # TODO: use async for wait end of job to delete him: `job_instance.delete_job(name)`
+    return {"status": "OK"}
