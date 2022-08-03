@@ -1,5 +1,6 @@
 from typing import Optional
-
+from pathlib import Path
+import os
 from fastapi import FastAPI
 
 from prepare_data.main import main
@@ -25,5 +26,6 @@ async def generate(x1: float, y1: float, x2: float, y2: float,
         x2, y2 = transform(inProj, outProj, y2, x2)
     # Convert to shapely polygon
     polygon = utils.convert2poly(x1, y1, x2, y2)
-    main(polygon)
+    path_to_save = Path(os.getenv('DATA_PATH')) / str(hash(x1 + y1 + x2 + y2))
+    main(polygon, path_to_save)
     return {"link": "https://.."}
