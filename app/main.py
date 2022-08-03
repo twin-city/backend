@@ -1,6 +1,6 @@
 from typing import Optional
 from pathlib import Path
-
+import os
 from fastapi import FastAPI
 
 from prepare_data.main import main
