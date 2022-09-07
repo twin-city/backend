@@ -3,7 +3,7 @@ import os
 import logging
 import time
 from time import sleep
-from kubernetes import client, config
+from kubernetes import client
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('jobs')
@@ -26,8 +26,6 @@ class Job:
         self.image = image
         self.namespace = namespace
         self.info_jobs = {}
-        self.kubeconfig_path = os.environ.update({'KUBECONFIG': kubeconfig_path}) \
-            if kubeconfig_path is not None else os.environ.get("KUBECONFIG")
 
     def create_job_object(self, job_name, cmd="echo", args=None):
         """
@@ -47,7 +45,9 @@ class Job:
             name=job_name,
             image=self.image,
             command=cmd if isinstance(cmd, list) else [cmd],
-            args=args if isinstance(args, list) else [args])
+            args=args if isinstance(args, list) else [args]
+            #volume_mounts=
+            )
 
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
