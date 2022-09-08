@@ -26,7 +26,7 @@ class ConfigMap:
             configmap = self._create_object(path=from_path)
             self.obj = self._create(configmap)
 
-        self.metadata = a.obj.metadata
+        self.metadata = self.obj.metadata
 
     def __repr__(self):
         return str(self.obj)
