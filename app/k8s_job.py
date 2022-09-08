@@ -10,7 +10,7 @@ logger = logging.getLogger('jobs')
 
 
 class Job:
-    def __init__(self, image="debian", namespace="default", kubeconfig_path=None):
+    def __init__(self, image="debian", namespace="default", configmap=None, mount_path=None, **kwargs):
         """
         Make a job in a kubernetes cluster
         WARNING: must run command `config.load_kube_config()`
@@ -26,6 +26,9 @@ class Job:
         self.image = image
         self.namespace = namespace
         self.info_jobs = {}
+        self.configmap = configmap
+        self.mount_path = mount_path
+        self.kwargs = kwargs
 
     def create_job_object(self, job_name, cmd="echo", args=None):
         """
@@ -40,19 +43,39 @@ class Job:
         -------
         V1Job: template for a job
         """
+
+        # Mount volume
+        if self.configmap is not None and self.mount_path is not None:
+            volume = client.V1Volume(
+                name=f'volume-{self.configmap}',
+                config_map=client.V1ConfigMapVolumeSource(name=self.configmap)
+                )
+            volume_mount = client.V1VolumeMount(
+                    mount_path=self.mount_path,
+                    name=f'volume-{self.configmap}',
+                    read_only= self.kwargs["read_only"] if "read_only" in self.kwargs else None
+                    )
+        else:
+            volume_mount = None
+            volume = None
+
         # Configureate Pod template container
         container = client.V1Container(
             name=job_name,
             image=self.image,
             command=cmd if isinstance(cmd, list) else [cmd],
-            args=args if isinstance(args, list) else [args]
-            #volume_mounts=
-            )
+            args=args if isinstance(args, list) else [args],
+            volume_mounts=[volume_mount]
+        )
 
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": job_name}),
-            spec=client.V1PodSpec(restart_policy="Never", containers=[container]))
+            spec=client.V1PodSpec(
+                            restart_policy="Never",
+                            containers=[container],
+                            volumes=[volume])
+                        )
 
         # Create the specification of deployment
         spec = client.V1JobSpec(
@@ -64,7 +87,8 @@ class Job:
             api_version="batch/v1",
             kind="Job",
             metadata=client.V1ObjectMeta(name=job_name),
-            spec=spec)
+            spec=spec
+            )
         return job
 
 
