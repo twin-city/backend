@@ -21,4 +21,3 @@ s3 = boto3.resource(
     aws_access_key_id=aws_access_key_id,
     aws_secret_access_key=aws_secret_access_key
 )
-import pdb; pdb.set_trace()

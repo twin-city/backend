@@ -18,12 +18,6 @@ COPY ./pyproject.toml /backend/pyproject.toml
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 COPY ./app /backend/app
 
-# Set environment var
-#ENV IMAGE=python3.10
-#ENV KUBECONFIG=os.environ['KUBECONFIG']
-#ENV JOB_NS=twincity
-
-
 RUN pip install pytest
 EXPOSE 80
 
