@@ -8,8 +8,8 @@ from prepare_data.main import main
 from prepare_data import utils
 from pyproj import Proj, transform
 
-from .config import Data
-from .job import Job
+from configmap import Data
+from job import Job
 
 sys.path.insert(0, "/backend/app")
 
