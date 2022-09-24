@@ -12,7 +12,7 @@ docker build -t backend .
 docker run -v $PWD/app:/backend/app -v $PWD/tests:/backend/tests -v $PWD/data:/data --env-file=.env  backend sh -c "pytest tests -s"
 ```
 
-# backend
+# Backend
 
 The package *backend* is served with fastapi, available in the docker image.
 
