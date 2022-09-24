@@ -28,6 +28,13 @@ class Job:
         image : str, image used for pod
         namespace : str, namespace where job is launch
         kubeconfig_path : str, optional, kubeconfig path, by default None
+        kwargs:
+            - pool_name: str, default None, schedule on node that match pool name.
+                        If value is None let kubernetes choose
+            - grace_period: int, default 5, grace period in seconds for delete pod
+            - read_only: bool, default None, mounted volumes are in read only
+            - ttl_deletion: int, time in seconds to delete automatically the job
+                            after finish, default 3600
         """
         self.job_completed = False
         self.api_instance = client.BatchV1Api()
@@ -77,6 +84,24 @@ class Job:
 
         return l_volume, l_volumemount
 
+    def _create_affinity(self):
+        """
+        Create affinity yaml
+        """
+        self.pool_name = self.kwargs["pool_name"] if "pool_name" in self.kwargs else None
+        if self.pool_name is not None:
+            #operator = 'In' if self.gpu_node else 'NotIn'
+            nodeselector_requirement = client.V1NodeSelectorRequirement(
+                key='k8s.scaleway.com/pool-name', values=[self.pool_name], operator='In')
+            nodeselector_terms = client.V1NodeSelectorTerm(
+                match_expressions=[nodeselector_requirement])
+            nodeselector = client.V1NodeSelector(
+                node_selector_terms=[nodeselector_terms])
+            nodeaffinity = client.V1NodeAffinity(
+                required_during_scheduling_ignored_during_execution=nodeselector)
+            affinity = client.V1Affinity(node_affinity=nodeaffinity)
+            return affinity
+
     def _create_job_object(self):
         """
         Create Job object
@@ -94,6 +119,9 @@ class Job:
         # Mount volume
         volume, volume_mount = self._create_volumes()
 
+        # Affinity
+        affinity = self._create_affinity()
+
         # Configureate Pod template container
         container = client.V1Container(
             name=self.job_name,
@@ -109,13 +137,17 @@ class Job:
             spec=client.V1PodSpec(
                 restart_policy="Never",
                 containers=[container],
-                volumes=volume)
+                volumes=volume,
+                affinity=affinity
+            )
         )
 
         # Create the specification of deployment
         spec = client.V1JobSpec(
             template=template,
-            backoff_limit=4)
+            backoff_limit=4,
+            ttl_seconds_after_finished=self.kwargs["ttl_deletion"] \
+                if "ttl_deletion" in self.kwargs else 3600)
 
         # Instantiate the job object
         job = client.V1Job(
@@ -175,10 +207,10 @@ class Job:
         Delete current job
         """
         api_response = self.api_instance.delete_namespaced_job(
-            name=self.job_name,
-            namespace=self.namespace,
+            name=self.job_name, namespace=self.namespace,
             body=client.V1DeleteOptions(
                 propagation_policy='Foreground',
-                grace_period_seconds=5))
+                grace_period_seconds=self.kwargs["grace_period"]
+                if "grace_period" in self.kwargs else 5))
         #logger.info(f"Job deleted. Status={str(api_response.status)}")
         return api_response.status

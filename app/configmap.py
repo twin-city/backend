@@ -4,16 +4,21 @@ import base64
 from kubernetes import client
 
 
-class Data:
+class ConfigMapSecrets:
     def __init__(
-            self, name, kind='secret', from_path=None, ns='default',
+            self,
+            name,
+            kind='secret',
+            from_path=None,
+            ns='default',
             metadata=None):
         """
         Create configmap or secret from filepath: by a directory, \
-            a list of files or a specific file
+            a list of files or a specific file (note: if kind is \
+                secret, data be encoded in base64)
 
         Usage example:
-            a = ConfigMap(name='test', kind='secret', from_path='./configmap.py')
+            a = ConfigMapSecrets(name='test', kind='secret', from_path='./configmap.py')
             print(a)
             a.delete()
 
@@ -88,7 +93,8 @@ class Data:
         Prepare kubernetes object
         """
         metadata = client.V1ObjectMeta(
-            deletion_grace_period_seconds=30,
+            deletion_grace_period_seconds=5,
+            #deletion_timestamp=10,
             name=self.name)
 
         if self.metadata is not None:
