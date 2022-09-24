@@ -6,7 +6,7 @@ RUN apt-get update \
 
 # Install prepare_data package
 # Create data volume
-
+ENV DATA_PATH="/data"
 RUN echo DATA_PATH=/data > .env
 VOLUME /data
 
