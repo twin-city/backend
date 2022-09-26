@@ -57,6 +57,7 @@ jobs:
       contents: read
       packages: write
     needs: test
+    if: github.ref == 'refs/heads/master'
     steps:
       -
         uses: actions/checkout@v3
@@ -81,11 +82,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       -
         name: Build and Push (latest)
-        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }},latest
           labels: ${{ steps.meta.outputs.labels }}
