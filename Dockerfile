@@ -6,7 +6,7 @@ RUN apt-get update \
 
 # Install prepare_data package
 # Create data volume
-
+ENV DATA_PATH="/data"
 RUN echo DATA_PATH=/data > .env
 VOLUME /data
 
@@ -17,6 +17,7 @@ COPY ./pyproject.toml /backend/pyproject.toml
 
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 COPY ./app /backend/app
+
 RUN pip install pytest
 EXPOSE 80
 
