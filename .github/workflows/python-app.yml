@@ -54,7 +54,7 @@ jobs:
     name: 🐋 Save docker image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     needs: test
     if: github.ref == 'refs/heads/master'
