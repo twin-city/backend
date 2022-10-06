@@ -1,4 +1,6 @@
 import sys
+sys.path.insert(0, "/backend/app")
+
 import pathlib
 from typing import Optional
 from kubernetes import config
@@ -11,7 +13,7 @@ from pyproj import Proj, transform
 from .configmap import ConfigMapSecrets
 from .job import Job
 
-sys.path.insert(0, "/backend/app")
+
 app = FastAPI()
 
 
