@@ -65,7 +65,7 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
     # start job
     if job:
         config.load_kube_config()
-        _ = ConfigMapSecrets(name=name, from_path=f"/data/jobs/{name}")
+        _ = ConfigMapSecrets(name=name, namespace="twincity", from_path=f"/data/jobs/{name}")
 
         job_unity = Job(name=name,
                 image="ghcr.io/twin-city/unity-project:os-unix-urp",

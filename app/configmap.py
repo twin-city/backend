@@ -10,7 +10,7 @@ class ConfigMapSecrets:
             name,
             kind='secret',
             from_path=None,
-            ns='default',
+            namespace='default',
             metadata=None):
         """
         Create configmap or secret from filepath: by a directory, \
@@ -24,7 +24,7 @@ class ConfigMapSecrets:
 
         """
         self.name = name
-        self.ns = ns
+        self.ns = namespace
         self.metadata = metadata
         self.api_instance = client.CoreV1Api()
         self.kind = kind
