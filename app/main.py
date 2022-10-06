@@ -1,7 +1,6 @@
 import sys
 sys.path.insert(0, "/backend/app")
 
-import hashlib
 import pathlib
 from typing import Optional
 from kubernetes import config
@@ -23,15 +22,21 @@ def read_root():
     return {"status": "listen"}
 
 @app.get('/delete/{job_name}')
-async def delete_job(job_name):
-    job = Job(name=job_name)
-    info = job.delete()
+async def delete_job(job_name: str):
+    try:
+        job = Job(name=job_name)
+        info = job.delete()
+    except Exception as f:
+        return 'Internal Error'
     return info
 
 @app.get('/status/{job_name}')
-async def delete_job(job_name):
-    job = Job(name=job_name)
-    info = job.get_job_status()
+async def status_job(job_name: str):
+    try:
+        job = Job(name=job_name)
+        info = job.get_job_status()
+    except Exception as f:
+        return 'Internal Error'
     return info
 
 @app.get("/generate/")
@@ -78,7 +83,7 @@ async def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False
                 )
 
         status = job_unity.get_job_status()
-        if status['succeeded']:
+        if 'succeeded' in status:
             return {'status': 'OK', "url": f"https://{name}.s3.fr-par.scw.cloud"}
         try:
             job_unity.start_job()
