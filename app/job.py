@@ -16,7 +16,7 @@ class Job:
                  cmd,
                  namespace="default",
                  args=None,
-                 configmap=None,
+                 config=None,
                  mount_path=None,
                  **kwargs):
         """
@@ -27,7 +27,10 @@ class Job:
         ----------
         image : str, image used for pod
         namespace : str, namespace where job is launch
-        kubeconfig_path : str, optional, kubeconfig path, by default None
+        cmd: list or str, entrypoint command 
+        args: list or str, args of entrypoint command
+        config: list or str, name of configmap or secrets available in cluster
+        mount_path: list or str, path where config is mounted (evaluated by index)
         kwargs:
             - pool_name: str, default None, schedule on node that match pool name.
                         If value is None let kubernetes choose
@@ -35,6 +38,8 @@ class Job:
             - read_only: bool, default None, mounted volumes are in read only
             - ttl_deletion: int, time in seconds to delete automatically the job
                             after finish, default 3600
+            - type_volume: str or list: type of mount for config `secrets` or `configmap`
+
         """
         self.job_completed = False
         self.api_instance = client.BatchV1Api()
@@ -44,7 +49,7 @@ class Job:
         self.args = args
         self.namespace = namespace
         self._info_jobs = {}
-        self.configmap = configmap
+        self.config = config
         self.mount_path = mount_path
         self.kwargs = kwargs
         self.job = self._create_job_object()
@@ -56,23 +61,41 @@ class Job:
         """
         Create volume yaml part for job template
         """
-        if self.configmap is None or self.mount_path is None:
+        if self.config is None or self.mount_path is None:
             return None, None
 
-        self.configmap = [self.configmap] if isinstance(
-            self.configmap, str) else self.configmap
+        self.config = [self.config] if isinstance(
+            self.config, str) else self.config
         self.mount_path = [self.mount_path] if isinstance(
             self.mount_path, str) else self.mount_path
 
-        if len(self.configmap) != len(self.mount_path):
+        if len(self.config) != len(self.mount_path):
             print('Mismatch configmaps and volumes mounts')
             return None, None
 
+        self.type_volumes = self.kwargs["type_volume"] if "type_volume" \
+            in self.kwargs else ['configmap'] * len(self.config)
+
+        self.type_volumes = [
+            self.type_volumes] * len(
+            self.config) if isinstance(
+            self.type_volumes, str) else self.type_volumes
+
+        if len(self.type_volumes) != len(self.mount_path):
+            print('Mismatch types volumes, all types are converted to configmap')
+            return None, None
+
         l_volume, l_volumemount = [], []
-        for cm, vm in zip(self.configmap, self.mount_path):
+
+        for cm, vm, tm in zip(self.config, self.mount_path, self.type_volumes):
+            if tm == 'secret':
+                expand = {"secret": client.V1SecretVolumeSource(secret_name=cm)}
+            else:
+                expand = {"config_map": client.V1ConfigMapVolumeSource(name=cm)}
+
             volume = client.V1Volume(
                 name=f'volume-{cm}',
-                config_map=client.V1ConfigMapVolumeSource(name=cm)
+                **expand
             )
             volume_mount = client.V1VolumeMount(
                 mount_path=vm,
@@ -146,8 +169,8 @@ class Job:
         spec = client.V1JobSpec(
             template=template,
             backoff_limit=4,
-            ttl_seconds_after_finished=self.kwargs["ttl_deletion"] \
-                if "ttl_deletion" in self.kwargs else 3600)
+            ttl_seconds_after_finished=self.kwargs["ttl_deletion"]
+            if "ttl_deletion" in self.kwargs else 3600)
 
         # Instantiate the job object
         job = client.V1Job(

@@ -40,23 +40,27 @@ async def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False
         _ = ConfigMapSecrets(name=name, from_path=f"/data/{name}")
 
         job_unity = Job(name=name,
-                image="ghcr.io/twin-city/unity-project:os-unix-urp",
-                cmd=["bash"],
-                args=["-c", "wget https://github.com/twin-city/unity-project/archive/os/unix-urp.tar.gz \
-                    && tar xf unix-urp.tar.gz \
-                    && cd unity-project-os-unix-urp \
-                    && chmod +x Assets/CommandeCLI/Run.sh \
-                    && Assets/CommandeCLI/Run.sh -d /unity-project-os-unix-urp \
-                    -j /input -l /licence/Unity_v2020_pro2xs.x.ulf -b /output \
-                    && sleep 3600"],
-                configmap=[name, 'licence'],
-                mount_path=['/input', '/licence'],
-                pool_name="pool-gpu-3070s")
+                    image="ghcr.io/twin-city/unity-project:os-unix-urp",
+                    cmd=["bash"],
+                    args=["-c", "wget https://github.com/twin-city/unity-project/archive/os/unix-urp.tar.gz \
+                        && tar xf unix-urp.tar.gz \
+                        && cd unity-project-os-unix-urp \
+                        && apt update && apt install -qy awscli python3-pip \
+                        && pip install awscli-plugin-endpoint \
+                        && cp /config/config /root/.aws/ \
+                        && cp /cred/credentials /root/.aws/ \
+                        && chmod +x Assets/CommandeCLI/Run.sh Assets/CommandeCLI/upload-webgl.sh\
+                        && Assets/CommandeCLI/Run.sh -d /unity-project-os-unix-urp \
+                        -j /input -l /licence/Unity_v2020_pro2xs.x.ulf -b /output \
+                        && Assets/CommandeCLI/Run.sh Assets/CommandeCLI/upload-webgl.sh"],
+                    config=[name, 'licence', 'aws-cred', 'aws-conf'],
+                    mount_path=['/input', '/licence', '/root/config/', '/root/.aws/'],
+                    type_volume=["configmap", "configmap", "secret", "configmap"],
+                    pool_name="pool-pro2-s")
 
         try:
             job_unity.start_job()
         except Exception as e:
             return {'Job failed': e}
-        return {"status": "COMPLETED"}
-    # TODO: use async for wait end of job to delete him: `job_instance.delete_job(name)`
+        return {"status": "OK"}
     return {"status": "OK"}
