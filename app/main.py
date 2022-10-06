@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, "/backend/app")
 
+import hashlib
 import pathlib
 from typing import Optional
 from kubernetes import config
@@ -22,7 +23,7 @@ def read_root():
     return {"status": "listen"}
 
 @app.get('/delete/{job_name}')
-async def delete_job(job_name: str):
+def delete_job(job_name: str):
     try:
         job = Job(name=job_name)
         info = job.delete()
@@ -31,7 +32,7 @@ async def delete_job(job_name: str):
     return info
 
 @app.get('/status/{job_name}')
-async def status_job(job_name: str):
+def status_job(job_name: str):
     try:
         job = Job(name=job_name)
         info = job.get_job_status()
@@ -40,10 +41,10 @@ async def status_job(job_name: str):
     return info
 
 @app.get("/generate/")
-async def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
+def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
                    crs: Optional[str] = None):
     # Convert to LAMBERT if needed
-    name = f'job-{y1}-{x1}-{y2}-{x2}'
+    name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}').hexdigest()
     if not pathlib.Path(f"/data/{name}").exists():
         if crs:
             inProj = Proj('+init='+crs, preserve_units=True)
@@ -89,8 +90,9 @@ async def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False
             job_unity.start_job()
         except Exception as e:
             return {'status': 'KO', 'reason': e}
-        return {"status": "OK", "url": f'https://{name}.s3.fr-par.scw.cloud'}
+        return {"status": "OK", "job_name": name, "url": f'https://{name}.s3.fr-par.scw.cloud'}
     return {"status": "OK",
+            "job_name": name,
             "url": f'https://{name}.s3.fr-par.scw.cloud',
             "warning": "no job launched"}
 
