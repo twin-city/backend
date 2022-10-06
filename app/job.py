@@ -1,8 +1,6 @@
 import sys
-import os
+import json
 import logging
-import time
-from time import sleep
 from kubernetes import client
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -12,8 +10,8 @@ logger = logging.getLogger('jobs')
 class Job:
     def __init__(self,
                  name,
-                 image,
-                 cmd,
+                 image=None,
+                 cmd=None,
                  namespace="default",
                  args=None,
                  config=None,
@@ -27,39 +25,51 @@ class Job:
         ----------
         image : str, image used for pod
         namespace : str, namespace where job is launch
-        cmd: list or str, entrypoint command 
+        cmd: list or str, entrypoint command
         args: list or str, args of entrypoint command
         config: list or str, name of configmap or secrets available in cluster
         mount_path: list or str, path where config is mounted (evaluated by index)
         kwargs:
+            - retry: int, default 1, number of retry if job failed
             - pool_name: str, default None, schedule on node that match pool name.
                         If value is None let kubernetes choose
             - grace_period: int, default 5, grace period in seconds for delete pod
             - read_only: bool, default None, mounted volumes are in read only
             - ttl_deletion: int, time in seconds to delete automatically the job
                             after finish, default 3600
-            - type_volume: str or list: type of mount for config `secrets` or `configmap`
-
+            - type_volume: str or list, type of mount for config `secret` or `configmap`
+            - env: dict, each key value of env vars to mount in pod
         """
-        self.job_completed = False
         self.api_instance = client.BatchV1Api()
         self.image = image
         self.job_name = name
         self.cmd = cmd
         self.args = args
         self.namespace = namespace
-        self._info_jobs = {}
         self.config = config
         self.mount_path = mount_path
         self.kwargs = kwargs
-        self.job = self._create_job_object()
+
+        if image is not None:
+            self.job = self._create_job_object()
 
     def __repr__(self):
         return str(self.job)
 
+    def _add_env_vars(self):
+        """
+        Add envs var to container spec
+        """
+        env = self.kwargs["env"] if "env" \
+            in self.kwargs else None
+
+        if env is not None:
+            env = [client.V1EnvVar(name=k, value=v) for k, v in env.items()]
+        return env
+
     def _create_volumes(self):
         """
-        Create volume yaml part for job template
+        Create volume yaml part for job template with configmap or secret
         """
         if self.config is None or self.mount_path is None:
             return None, None
@@ -138,6 +148,8 @@ class Job:
         -------
         V1Job: template for a job
         """
+        # Add env vars
+        env = self._add_env_vars()
 
         # Mount volume
         volume, volume_mount = self._create_volumes()
@@ -151,7 +163,8 @@ class Job:
             image=self.image,
             command=self.cmd if isinstance(self.cmd, list) else [self.cmd],
             args=self.args if isinstance(self.args, list) else [self.args],
-            volume_mounts=volume_mount
+            volume_mounts=volume_mount,
+            env=env
         )
 
         # Create and configure a spec section
@@ -168,7 +181,7 @@ class Job:
         # Create the specification of deployment
         spec = client.V1JobSpec(
             template=template,
-            backoff_limit=4,
+            backoff_limit=self.kwargs["retry"] if "retry" in self.kwargs else 1,
             ttl_seconds_after_finished=self.kwargs["ttl_deletion"]
             if "ttl_deletion" in self.kwargs else 3600)
 
@@ -183,57 +196,41 @@ class Job:
 
     def start_job(self):
         """
-        Start kubernetes job. It's possible to see template with `job` attribute
+        Start kubernetes job. It's possible before to see template with `job` attribute
         """
-        self._info_jobs["start"] = time.time()
-        api_response = self.api_instance.create_namespaced_job(
-            body=self.job,
-            namespace=self.namespace)
-        #logger.info(f"Job created. status={str(api_response.status)}")
+        try:
+            api_response = self.api_instance.create_namespaced_job(
+                body=self.job,
+                namespace=self.namespace)
+        except client.rest.ApiException as f:
+            return json.loads(f.body)
         return api_response.status
 
-    def get_job_status(self, follow=True, wait=1):
+    def get_job_status(self):
         """
         See logs for current job
-
-        Parameters
-        ----------
-        follow : bool, optional
-            follow logs, by default True
-        wait : int, optional
-            time in seconds between refresh, by default 1
         """
-        while not self.job_completed:
+        try:
             api_response = self.api_instance.read_namespaced_job_status(
                 name=self.job_name,
                 namespace=self.namespace)
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
-                self.job_completed = True
-            self._info_jobs["current"] = time.time()
-            #logger.info(f"{self._info_jobs['current'] - self._info_jobs['start']} Job status={str(api_response.status)}")
-            if not follow:
-                # TODO: func
-                info = api_response.status.to_dict()
-                self._info_jobs["current"] = time.time()
-                info["duration"] = self._info_jobs['current'] - self._info_jobs['start']
-                return info
-            sleep(wait)
-        if self.job_completed:
-            info = api_response.status.to_dict()
-            self._info_jobs["current"] = time.time()
-            info["duration"] = self._info_jobs['current'] - self._info_jobs['start']
-            return info
+        except client.rest.ApiException as f:
+            return json.loads(f.body)
+        info = api_response.status.to_dict()
+        info["name"] = self.job_name
+        return info
 
     def delete_job(self):
         """
         Delete current job
         """
-        api_response = self.api_instance.delete_namespaced_job(
-            name=self.job_name, namespace=self.namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=self.kwargs["grace_period"]
-                if "grace_period" in self.kwargs else 5))
-        #logger.info(f"Job deleted. Status={str(api_response.status)}")
+        try:
+            api_response = self.api_instance.delete_namespaced_job(
+                name=self.job_name, namespace=self.namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=self.kwargs["grace_period"]
+                    if "grace_period" in self.kwargs else 5))
+        except client.rest.ApiException as f:
+            return json.loads(f.body)
         return api_response.status
