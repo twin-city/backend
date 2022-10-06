@@ -123,7 +123,7 @@ class ConfigMapSecrets:
             return api_response
 
         except client.rest.ApiException as e:
-            print(f"Error when calling create {self.kind}: {e}\n")
+            return f"Error when calling create {self.kind}: {e}\n"
 
     def delete(self, msg='delete'):
         """
@@ -134,4 +134,4 @@ class ConfigMapSecrets:
                 namespace=self.ns, name=self.name)
             print(f'{self.name} {self.kind} was {msg}d sucessfully')
         except client.rest.ApiException as e:
-            print(f"Error when calling {msg} {self.kind}: {e}\n")
+            return f"Error when calling {msg} {self.kind}: {e}\n"
