@@ -26,7 +26,7 @@ def read_root():
 def delete_job(job_name: str):
     try:
         job = Job(name=job_name)
-        info = job.delete()
+        info = job.delete_job()
     except Exception as f:
         return 'Internal Error'
     return info
@@ -44,7 +44,7 @@ def status_job(job_name: str):
 def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
                    crs: Optional[str] = None):
     # Convert to LAMBERT if needed
-    name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}').hexdigest()
+    name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
     if not pathlib.Path(f"/data/{name}").exists():
         if crs:
             inProj = Proj('+init='+crs, preserve_units=True)
