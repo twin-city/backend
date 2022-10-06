@@ -54,17 +54,18 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
         # Convert to shapely polygon
         try:
             polygon = utils.convert2poly(x1, y1, x2, y2)
-            main(polygon, pathlib.Path(f'/data/{name}'))
+            main(polygon, pathlib.Path(f'/data/jobs/{name}'))
         except Exception as f:
             return {"status": "KO", "reason": f}
     # start job
     if job:
         config.load_kube_config()
-        _ = ConfigMapSecrets(name=name, from_path=f"/data/{name}")
+        _ = ConfigMapSecrets(name=name, from_path=f"/data/jobs/{name}")
 
         job_unity = Job(name=name,
                 image="ghcr.io/twin-city/unity-project:os-unix-urp",
                 cmd=["bash"],
+                namespace="twincity",
                 args=["-c", "git clone -b os/unix-urp https://github.com/twin-city/unity-project \
                     && cd unity-project \
                     && apt update && apt install -qy awscli python3-pip \
