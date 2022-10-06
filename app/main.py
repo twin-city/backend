@@ -10,8 +10,8 @@ from prepare_data.main import main
 from prepare_data import utils
 from pyproj import Proj, transform
 
-from .configmap import ConfigMapSecrets
-from .job import Job
+from configmap import ConfigMapSecrets
+from job import Job
 
 
 app = FastAPI()
