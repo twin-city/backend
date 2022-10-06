@@ -1,4 +1,5 @@
 import sys
+import os
 sys.path.insert(0, "/backend/app")
 
 import hashlib
@@ -21,6 +22,10 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"status": "listen"}
+
+@app.get('/list')
+def list_job():
+    return os.listdir('/data/jobs')
 
 @app.get('/delete/{job_name}')
 def delete_job(job_name: str):
