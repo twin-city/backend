@@ -48,8 +48,8 @@ def delete_job(job_name: str):
         if pathlib.Path(path).is_dir():
             shutil.rmtree(path)
             info["file_delete"] = True
-        except Exception as f:
-            info['error_deletion_files'] = True
+    except Exception as f:
+        info['error_deletion_files'] = True
     return info
 
 
