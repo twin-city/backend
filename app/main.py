@@ -32,17 +32,24 @@ def list_job():
 
 @app.get('/delete/{job_name}')
 def delete_job(job_name: str):
+    info = {}
     path = f"/data/jobs/{job_name}"
     try:
         job = Job(name=job_name, namespace="twincity")
         info = job.delete_job()
+    except:
+        info['error_deletion_job'] = True
+    try:
         cm = ConfigMapSecrets(name=job_name, namespace="twincity", kind="configmap")
         cm.delete()
+    except:
+        info['error_deletion_cm'] = True
+     try:
         if pathlib.Path(path).is_dir():
             shutil.rmtree(path)
             info["file_delete"] = True
-    except Exception as f:
-        return 'Internal Error'
+        except Exception as f:
+            info['error_deletion_files'] = True
     return info
 
 
@@ -80,7 +87,7 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
                             kind="configmap",
                             namespace="twincity",
                             from_path=f"/data/jobs/{name}")
-
+        #TODO: check if mounted volumes is availables
         job_unity = Job(
             name=name, image="ghcr.io/twin-city/unity-project:os-unix-urp",
             cmd=["bash"],
@@ -97,10 +104,10 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
                     && Assets/CommandeCLI/Run.sh -d /unity-project \
                     -j /input -l /licence/Unity_v2020_pro2xs.x.ulf -b /output \
                     && Assets/CommandeCLI/upload-webgl.sh"],
-            config=[name, 'licence', 'aws-cred', 'aws-conf'],
             env={"BUCKET_NAME": name},
+            config=[name, 'licence', 'aws-cred', 'aws-conf'],
             mount_path=['/input', '/licence', '/cred', '/config'],
-            type_volume=["configmap", "configmap", "secret", "configmap"],
+            type_volume=["configmap", "confimap", "secret", "configmap"],
             pool_name="pool-gpu-3070-s")
 
         status = job_unity.get_job_status()
