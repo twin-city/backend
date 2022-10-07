@@ -26,7 +26,8 @@ def read_root():
 
 @app.get('/list')
 def list_job():
-    return os.listdir('/data/jobs')
+    if pathlib.Path('/data/jobs').is_dir():
+        return os.listdir('/data/jobs')
 
 
 @app.get('/delete/{job_name}')
@@ -37,7 +38,7 @@ def delete_job(job_name: str):
         info = job.delete_job()
         cm = ConfigMapSecrets(name=job_name, namespace="twincity", kind="configmap")
         cm.delete()
-        if pathlib.Path('test-dir').is_dir(path):
+        if pathlib.Path(path).is_dir():
             shutil.rmtree(path)
             info["file_delete"] = True
     except Exception as f:
