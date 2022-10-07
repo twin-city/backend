@@ -183,7 +183,7 @@ class Job:
             template=template,
             backoff_limit=self.kwargs["retry"] if "retry" in self.kwargs else 1,
             ttl_seconds_after_finished=self.kwargs["ttl_deletion"]
-            if "ttl_deletion" in self.kwargs else 3600)
+            if "ttl_deletion" in self.kwargs else None)
 
         # Instantiate the job object
         job = client.V1Job(
