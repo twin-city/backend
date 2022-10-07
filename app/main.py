@@ -61,7 +61,7 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
              crs: Optional[str] = None):
     # Convert to LAMBERT if needed
     name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
-    if not pathlib.Path(f"/data/{name}").exists():
+    if not pathlib.Path(f"/data/jobs/{name}").exists():
         if crs:
             inProj = Proj('+init='+crs, preserve_units=True)
             outProj = Proj("+init=EPSG:2154")  # LAMBERT
