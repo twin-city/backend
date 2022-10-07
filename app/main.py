@@ -44,7 +44,7 @@ def delete_job(job_name: str):
         cm.delete()
     except:
         info['error_deletion_cm'] = True
-     try:
+    try:
         if pathlib.Path(path).is_dir():
             shutil.rmtree(path)
             info["file_delete"] = True
