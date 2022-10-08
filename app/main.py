@@ -4,6 +4,7 @@ import hashlib
 import sys
 import os
 import shutil
+import subprocess
 
 sys.path.insert(0, "/backend/app")
 
@@ -68,6 +69,8 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
              crs: Optional[str] = None):
     # Convert to LAMBERT if needed
     name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
+
+    """
     if not pathlib.Path(f"/data/jobs/{name}").exists():
         if crs:
             inProj = Proj('+init='+crs, preserve_units=True)
@@ -80,6 +83,13 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
             main(polygon, pathlib.Path(f'/data/jobs/{name}'))
         except Exception as f:
             return {"status": "KO", "reason": f}
+    """
+    # No working with main function, temporally workaround
+    crs = crs if crs is not None else "EPSG:4326"
+    subprocess.run(["python", "-m", "prepare_data.main", 
+                    f"{x1}", f"{y1}", f"{x2}", f"{y2}", 
+                    "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"], 
+                   shell=False)
     # start job
     if job:
         config.load_kube_config()
