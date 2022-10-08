@@ -122,13 +122,13 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
 
         status = job_unity.get_job_status()
         if 'succeeded' in status:
-            return {'status': 'OK', "url": f"https://{name}.s3.fr-par.scw.cloud"}
+            return {'status': 'OK', "url": f"https://{name}.s3-website.fr-par.scw.cloud"}
         try:
             job_unity.start_job()
         except Exception as e:
             return {'status': 'KO', 'reason': e}
-        return {"status": "OK", "job_name": name, "url": f'https://{name}.s3.fr-par.scw.cloud'}
+        return {"status": "OK", "job_name": name, "url": f'https://{name}.s3-website.fr-par.scw.cloud'}
     return {"status": "OK",
             "job_name": name,
-            "url": f'https://{name}.s3.fr-par.scw.cloud',
+            "url": f'https://{name}.s3-website.fr-par.scw.cloud',
             "warning": "no job launched"}
