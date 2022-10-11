@@ -16,9 +16,11 @@ from prepare_data.main import main
 from fastapi import FastAPI
 from kubernetes import config
 
+from s3 import S3
 
 app = FastAPI()
 
+s3 = S3()
 
 @app.get("/")
 def read_root():
@@ -69,7 +71,9 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
              crs: Optional[str] = None):
     # Convert to LAMBERT if needed
     name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
-
+    # Test if a job with the same coordinates inputs had been already saved.
+    if s3.check_bucket(name):
+        return {'status': 'OK', "url": f"https://{name}.s3-website.fr-par.scw.cloud"}    
     """
     if not pathlib.Path(f"/data/jobs/{name}").exists():
         if crs:
@@ -86,9 +90,9 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
     """
     # No working with main function, temporally workaround
     crs = crs if crs is not None else "EPSG:4326"
-    subprocess.run(["python", "-m", "prepare_data.main", 
-                    f"{x1}", f"{y1}", f"{x2}", f"{y2}", 
-                    "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"], 
+    subprocess.run(["python", "-m", "prepare_data.main",
+                    f"{x1}", f"{y1}", f"{x2}", f"{y2}",
+                    "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"],
                    shell=False)
     # start job
     if job:
