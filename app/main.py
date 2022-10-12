@@ -61,9 +61,19 @@ def status_job(job_name: str):
     try:
         job = Job(name=job_name, namespace="twincity")
         info = job.get_job_status()
+        if 'suceeded' in info:
+            if info["suceeded"] == 1:
+                return {'status': 'FINISHED', 
+                       "code": 200, 
+                       "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": job_name}
+            elif info["suceeded"] is None:
+                return {"code": 202, 
+                        "status" : "WAITING",
+                        "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": job_name}
     except Exception as f:
-        return 'Internal Error'
-    return info
+        return {'reason': f, 'code': 500}
 
 
 @app.get("/generate/")
@@ -73,7 +83,9 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
     name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
     # Test if a job with the same coordinates inputs had been already saved.
     if s3.check_bucket(name):
-        return {'status': 'OK', "url": f"https://{name}.s3-website.fr-par.scw.cloud"}    
+        return {'status': 'FINISHED', 
+                "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                "code": 200}    
     """
     if not pathlib.Path(f"/data/jobs/{name}").exists():
         if crs:
@@ -88,12 +100,16 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
         except Exception as f:
             return {"status": "KO", "reason": f}
     """
-    # No working with main function, temporally workaround
-    crs = crs if crs is not None else "EPSG:4326"
-    subprocess.run(["python", "-m", "prepare_data.main",
-                    f"{x1}", f"{y1}", f"{x2}", f"{y2}",
-                    "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"],
-                   shell=False)
+    if not pathlib.Path(f"/data/jobs/{name}").exists():
+        crs = crs if crs is not None else "EPSG:4326"
+        try:
+            subprocess.run(["python", "-m", "prepare_data.main", 
+                            f"{x1}", f"{y1}", f"{x2}", f"{y2}", 
+                            "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"], 
+                        shell=False)
+        except Exception as f:
+            return {"status": "KO", "reason": f, "code": 500}
+
     # start job
     if job:
         config.load_kube_config()
@@ -126,13 +142,18 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
 
         status = job_unity.get_job_status()
         if 'succeeded' in status:
-            return {'status': 'OK', "url": f"https://{name}.s3-website.fr-par.scw.cloud"}
+            return {'status': 'FINISHED', 
+                    "code": 200, 
+                    "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                    "job_name": name}
         try:
             job_unity.start_job()
         except Exception as e:
-            return {'status': 'KO', 'reason': e}
-        return {"status": "OK", "job_name": name, "url": f'https://{name}.s3-website.fr-par.scw.cloud'}
-    return {"status": "OK",
+            return {"status": "KO", "reason": e, "code": 500}
+        return {"status": "LAUNCHED", "code": 201, "job_name": name, "url": f'https://{name}.s3-website.fr-par.scw.cloud'}
+
+    return {"status": "FINISHED",
             "job_name": name,
+            "code": 200,
             "url": f'https://{name}.s3-website.fr-par.scw.cloud',
             "warning": "no job launched"}
