@@ -141,11 +141,17 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
             pool_name="pool-gpu-3070-s")
 
         status = job_unity.get_job_status()
-        if 'succeeded' in status:
-            return {'status': 'FINISHED', 
-                    "code": 200, 
-                    "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
-                    "job_name": name}
+        if 'suceeded' in status:
+            if status["suceeded"] == 1:
+                return {'status': 'FINISHED', 
+                       "code": 200, 
+                       "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": job_name}
+            elif status["suceeded"] is None:
+                return {"code": 202, 
+                        "status" : "WAITING",
+                        "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": job_name}
         try:
             job_unity.start_job()
         except Exception as e:
