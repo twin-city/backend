@@ -48,6 +48,9 @@ jobs:
         # Export all variables
         source .env
         export $(cut -d= -f1 .env)
+        # Export secret
+        export ACCESS_KEY_ID=${{secrets.ACCESS_KEY_ID}}
+        export ACCESS_KEY=${{secrets.ACCESS_KEY}}
         pytest tests
 
   deploy:

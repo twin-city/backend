@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 kubernetes
+boto3
 git+https://github.com/twin-city/prepare-data.git@master
