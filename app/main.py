@@ -145,13 +145,13 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
             if status["suceeded"] == 1:
                 return {'status': 'FINISHED', 
                        "code": 200, 
-                       "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
-                       "job_name": job_name}
+                       "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": name}
             elif status["suceeded"] is None:
                 return {"code": 202, 
                         "status" : "WAITING",
-                        "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
-                       "job_name": job_name}
+                        "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                       "job_name": name}
         try:
             job_unity.start_job()
         except Exception as e:
