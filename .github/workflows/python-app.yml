@@ -88,8 +88,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
-            # set latest tag for master branch
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            latest=auto
           tags: |
             type=schedule
             # branch event
@@ -100,6 +99,8 @@ jobs:
             type=ref,enable=true,priority=600,prefix=pr-,suffix=,event=pr
             # push tag version of tagged branch
             type=semver,pattern={{version}},event=tag
+            # set latest tag for master branch
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
       -
         name: Build and Push (latest)
         uses: docker/build-push-action@v3
