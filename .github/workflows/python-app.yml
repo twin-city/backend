@@ -64,7 +64,7 @@ jobs:
       contents: read
       packages: write
     #if: github.ref == 'refs/heads/master'
-    if: github.event_name == 'push tag'
+    if: github.ref_type == 'tag'
     steps:
       -
         uses: actions/checkout@v3
