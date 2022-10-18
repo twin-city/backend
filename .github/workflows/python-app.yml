@@ -5,7 +5,7 @@ name: Python application
 
 on:
   push:
-    branches: [ "master","feat/version" ]
+    branches: [ "master" ]
     tags:
         - 'v*'
 
@@ -63,8 +63,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-    #if: github.ref == 'refs/heads/master'
-    if: github.ref_type == 'tag'
+    if: github.ref == 'refs/heads/master'
+    #if: github.ref_type == 'tag' && github.ref == 'refs/heads/master'
     steps:
       -
         uses: actions/checkout@v3
