@@ -18,7 +18,7 @@ The package *backend* is served with fastapi, available in the docker image.
 
 - To launch locally :
 ```
-docker run --rm -p 8080:80 -v $PWD/app:/backend/app -v $PWD/data:/data  --env-file=.env DATA_PATH=/data  --name backend-fastapi backend
+docker run --rm -d -p 8080:80 -v $PWD/app:/backend/app -v $PWD/data:/data  --env-file=.env   --name backend-fastapi backend
 ```
 - To test locally:
 ```

@@ -6,6 +6,9 @@ name: Python application
 on:
   push:
     branches: [ "master" ]
+    tags:
+        - 'v*'
+
   pull_request:
     branches: [ "master" ]
 
@@ -61,6 +64,7 @@ jobs:
       contents: read
       packages: write
     if: github.ref == 'refs/heads/master'
+    #if: github.ref_type == 'tag' && github.ref == 'refs/heads/master'
     steps:
       -
         uses: actions/checkout@v3
@@ -83,6 +87,18 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=schedule
+            # branch event
+            type=ref,enable=true,priority=600,prefix=,suffix=,event=branch
+            # tag event
+            # type=ref,enable=true,priority=600,prefix=,suffix=,event=tag
+            # pull request event
+            type=ref,enable=true,priority=600,prefix=pr-,suffix=,event=pr
+            # push tag version of tagged branch
+            type=semver,pattern={{version}},event=tag
       -
         name: Build and Push (latest)
         uses: docker/build-push-action@v3
@@ -90,5 +106,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}

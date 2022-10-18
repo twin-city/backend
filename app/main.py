@@ -18,7 +18,33 @@ from kubernetes import config
 
 from s3 import S3
 
-app = FastAPI()
+description = """
+Backend to serve [prepare_data](https://github.com/twin-city/prepare-data)
+package and launch kubernetes job. 🚀
+
+## Kubernetes Job management
+
+You can *list, delete* get *status, generate* jobs
+to create a **district of Paris in webGL**
+in our resource extensive kubernetes nodes.
+
+"""
+
+app = FastAPI(
+    title="TwincityBackend",
+    description=description,
+    version=os.getenv("APP_VERSION","0.0.1"),
+    terms_of_service="https://twincity.fr/terms/",
+    contact={
+        "name": "twincity",
+        "url": "http://twincity.fr",
+        "email": "datalab@interieur.gouv.fr",
+    },
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
 
 s3 = S3()
 
@@ -63,14 +89,14 @@ def status_job(job_name: str):
         info = job.get_job_status()
         if 'suceeded' in info:
             if info["suceeded"] == 1:
-                return {'status': 'FINISHED', 
-                       "code": 200, 
-                       "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                return {'status': 'FINISHED',
+                       "code": 200,
+                       "url": f"https://{job_name}.s3-website.fr-par.scw.cloud",
                        "job_name": job_name}
             elif info["suceeded"] is None:
-                return {"code": 202, 
+                return {"code": 202,
                         "status" : "WAITING",
-                        "url": f"https://{job_name}.s3-website.fr-par.scw.cloud", 
+                        "url": f"https://{job_name}.s3-website.fr-par.scw.cloud",
                        "job_name": job_name}
     except Exception as f:
         return {'reason': f, 'code': 500}
@@ -83,9 +109,9 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
     name = hashlib.sha1(f'job-{y1}-{x1}-{y2}-{x2}'.encode()).hexdigest()
     # Test if a job with the same coordinates inputs had been already saved.
     if s3.check_bucket(name):
-        return {'status': 'FINISHED', 
-                "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
-                "code": 200}    
+        return {'status': 'FINISHED',
+                "url": f"https://{name}.s3-website.fr-par.scw.cloud",
+                "code": 200}
     """
     if not pathlib.Path(f"/data/jobs/{name}").exists():
         if crs:
@@ -103,9 +129,9 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
     if not pathlib.Path(f"/data/jobs/{name}").exists():
         crs = crs if crs is not None else "EPSG:4326"
         try:
-            subprocess.run(["python", "-m", "prepare_data.main", 
-                            f"{x1}", f"{y1}", f"{x2}", f"{y2}", 
-                            "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"], 
+            subprocess.run(["python", "-m", "prepare_data.main",
+                            f"{x1}", f"{y1}", f"{x2}", f"{y2}",
+                            "--CRS", crs, "--path-to-save", f"/data/jobs/{name}"],
                         shell=False)
         except Exception as f:
             return {"status": "KO", "reason": f, "code": 500}
@@ -143,14 +169,14 @@ def generate(x1: float, y1: float, x2: float, y2: float, job: bool = False,
         status = job_unity.get_job_status()
         if 'suceeded' in status:
             if status["suceeded"] == 1:
-                return {'status': 'FINISHED', 
-                       "code": 200, 
-                       "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                return {'status': 'FINISHED',
+                       "code": 200,
+                       "url": f"https://{name}.s3-website.fr-par.scw.cloud",
                        "job_name": name}
             elif status["suceeded"] is None:
-                return {"code": 202, 
+                return {"code": 202,
                         "status" : "WAITING",
-                        "url": f"https://{name}.s3-website.fr-par.scw.cloud", 
+                        "url": f"https://{name}.s3-website.fr-par.scw.cloud",
                        "job_name": name}
         try:
             job_unity.start_job()
