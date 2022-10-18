@@ -18,7 +18,6 @@ COPY ./pyproject.toml /backend/pyproject.toml
 RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 COPY ./app /backend/app
 
-RUN pip install pytest
 EXPOSE 80
 
 # Set APP_VERSION

@@ -64,6 +64,7 @@ jobs:
       contents: read
       packages: write
     #if: github.ref == 'refs/heads/master'
+    if: github.event_name == 'push tag'
     steps:
       -
         uses: actions/checkout@v3
@@ -108,4 +109,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            APP_VERSION=${{ steps.meta.outputs.tags }}
+            APP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
