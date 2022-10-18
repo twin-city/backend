@@ -5,7 +5,10 @@ name: Python application
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master","feat/version" ]
+    tags:
+        - 'v*'
+
   pull_request:
     branches: [ "master" ]
 
@@ -60,7 +63,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: github.ref == 'refs/heads/master'
+    #if: github.ref == 'refs/heads/master'
     steps:
       -
         uses: actions/checkout@v3
@@ -83,12 +86,26 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=schedule
+            # branch event
+            type=ref,enable=true,priority=600,prefix=,suffix=,event=branch
+            # tag event
+            # type=ref,enable=true,priority=600,prefix=,suffix=,event=tag
+            # pull request event
+            type=ref,enable=true,priority=600,prefix=pr-,suffix=,event=pr
+            # push tag version of tagged branch
+            type=semver,pattern={{version}},event=tag
       -
         name: Build and Push (latest)
         uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          push: ${{ github.event_name == 'push tag' }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.tags }}
