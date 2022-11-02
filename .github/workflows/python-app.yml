@@ -42,6 +42,9 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
+      env:
+        ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
+        ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
       run: |
         # app module seems not to be used, whereas it is defined
         # in pyproject.toml, works  locally but not in githubaction.
@@ -52,8 +55,6 @@ jobs:
         source .env
         export $(cut -d= -f1 .env)
         # Export secret
-        export ACCESS_KEY_ID=${{secrets.ACCESS_KEY_ID}}
-        export ACCESS_KEY=${{secrets.ACCESS_KEY}}
         pytest tests
 
   deploy:
