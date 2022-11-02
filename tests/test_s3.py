@@ -5,5 +5,4 @@ s3 = S3()
 def test_bucket_exists():
     bucket_name = 'webgl-lp'
     print(bucket_name)
-    s3.set_bucket(bucket_name)
-    assert s3.check_bucket()
+    assert s3.check_bucket(bucket_name)
