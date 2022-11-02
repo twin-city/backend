@@ -45,16 +45,15 @@ jobs:
       env:
         ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
         ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+        REGION: fr-par
+        ENDPOINT: https://s3.fr-par.scw.cloud
+
       run: |
         # app module seems not to be used, whereas it is defined
         # in pyproject.toml, works  locally but not in githubaction.
         # Add the module directly in the python path ...
         export PYTHONPATH=$PYTHONPATH:$PWD/app
-        mv .env.sample .env
-        # Export all variables
-        source .env
-        export $(cut -d= -f1 .env)
-        # Export secret
+        export DATA_PATH=$PWD/data
         pytest tests
 
   deploy:
