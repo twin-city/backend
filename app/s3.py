@@ -27,6 +27,7 @@ class S3:
             aws_secret_access_key=aws_secret_access_key
         )
 
+
     @staticmethod
     def _check_type(path, recursive=False):
         """
