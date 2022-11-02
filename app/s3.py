@@ -27,9 +27,6 @@ class S3:
             aws_secret_access_key=aws_secret_access_key
         )
 
-    def set_bucket(self, bucket_name):
-        self.bucket = bucket_name
-
     @staticmethod
     def _check_type(path, recursive=False):
         """
